@@ -22,7 +22,7 @@ mafft --auto "E:/Reference Alignments/merged_reference_sequences.fasta" > "E:/Re
 seqkit grep -f "E:/GISAID_selected_sequences.txt" "E:/msaCodon_0201_fixed.fasta" > "E:/msaCodon_0201_B.1.177.fasta"
 
 # Align B.1.177 sequences to masked reference using MAFFT --add
-mafft --add "E:/msaCodon_0201_B.1.177.fasta" \
-      --reorder \
+mafft --keeplength --add "E:/msaCodon_0201_B.1.177.cleaned.fasta" \
       "E:/Reference Alignments/merged_reference_sequences_aligned_masked.fasta" \
       > "E:/aligned_B.1.177_to_reference.fasta"
+
