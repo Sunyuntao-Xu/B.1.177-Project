@@ -21,7 +21,8 @@ mafft --auto "E:/Reference Alignments/merged_reference_sequences.fasta" > "E:/Re
 # Extract B.1.177 sequences using SeqKit
 seqkit grep -f "E:/GISAID_selected_sequences.txt" "E:/msaCodon_0201_fixed.fasta" > "E:/msaCodon_0201_B.1.177.fasta"
 
-# Use trimAl to conduct gap removal again before realign
+# Use trimAl to remove highly gappy columns (>10% gaps) from B.1.177 sequences while preserving at least 95% of the alignment,
+# ensuring cleaner alignment and more consistent structure before aligning to the reference
 cd C:\trimAl
 .\trimal.exe -in "E:\msaCodon_0201_B.1.177.cleaned.fasta" -out "E:\msaCodon_0201_B.1.177.final_trimmed.fasta" -gt 0.9 -cons 95
 
