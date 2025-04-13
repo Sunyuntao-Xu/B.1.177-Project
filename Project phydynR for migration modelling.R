@@ -76,65 +76,63 @@ plot(dated_tree, no.margin = TRUE, cex = 0.5)
 
 
 ####### Define Model with Time-Varying beta(t) #######
-
-# Time points for beta
-betaTimes <- c(2020, 2020.5, 2021, 2022)
+# Define time points for beta(t)
+betaTimes <- c(2020.4, 2020.6, 2020.75, 2020.95, 2021.15, 2021.2)
 betaNames <- paste0("beta", betaTimes)
 
-# Parameters
+# Define parameters
 parms <- list(
-  gamma = 0.1,
-  mu = 0.01,
-  r = 0.01,
-  N_UK = 67e6,
-  S0_UK = 67e6 - 100,
-  N0_src = 5e7,
+  gamma = 0.14,           # Recovery rate, e.g., 1/7 per day
+  mu = 0.01,              # Natural death rate
+  N0_src = 5e7,           # Initial number for Europe, if needed
   
-  beta2020 = 2,
-  beta2020.5 = 5,
-  beta2021 = 3,
-  beta2022 = 1
+  beta2020.4 = 1,      # Approximate beta in early June 2020
+  beta2020.6 = 3,      # Approximate beta in late July 2020
+  beta2020.75 = 5,     # Peak beta in September 2020
+  beta2020.95 = 2,     # Beta in December 2020
+  beta2021.15 = 1,     # Beta in February 2021
+  beta2021.2 = 0.1          # Beta after Febuary 2021
 )
 
-# Define time-varying beta
-parms$beta.t <- function(t, p) {
-  approx(betaTimes, unlist(p[betaNames]), xout = t, rule = 2)$y
+# Define the time-varying beta function (force of infection)
+parms$beta.t <- function(t, p){
+  approx(betaTimes, unlist(p[betaNames]), xout = t, rule=2)$y
 }
 
-# Initial state
+# Set initial state: Only IR compartments, no S.
 x0 <- c(
   I_UK = 100,
-  S_UK = parms$S0_UK,
+  I_src = 1000,
   R_UK = 0,
-  src = parms$N0_src
+  R_src = 0
 )
 
-# Demes
-demes <- c('I_UK', 'src')
-nonDemes <- c('S_UK', 'R_UK')
+# Define demes (infectious compartments) and nonDemes (recovered compartments)
+demes <- c("I_UK", "I_src")
+nonDemes <- c("R_UK", "R_src")
 
-# Births matrix
-births <- matrix('0', nrow = 2, ncol = 2, dimnames = list(demes, demes))
-births['I_UK', 'I_UK'] <- 'parms$beta.t(t, parms) * S_UK * I_UK / parms$N_UK'
-births['src', 'src'] <- 'parms$r * src'
+# Births matrix: representing the generation of new infections
+# For both regions, new infections occur at rate beta(t)*I.
+births <- matrix("0", nrow=2, ncol=2, dimnames=list(demes, demes))
+births["I_UK", "I_UK"] <- "parms$beta.t(t, parms)*I_UK"
+births["I_src", "I_src"] <- "parms$beta.t(t, parms)*I_src"
 
-# Migration matrix
-migrations <- matrix('0', nrow = 2, ncol = 2, dimnames = list(demes, demes))
-migrations['src', 'I_UK'] <- 'parms$mu * src'
+# We omit migration terms in the ODEs since balanced migration cancels out.
+migrations <- matrix("0", nrow=2, ncol=2, dimnames=list(demes, demes))
 
-# Deaths
+# Deaths represent losses from the infectious compartments due to recovery and natural death.
 deaths <- c(
-  I_UK = 'parms$gamma * I_UK',
-  src  = '0'
+  I_UK = "parms$gamma*I_UK + parms$mu*I_UK",
+  I_src = "parms$gamma*I_src + parms$mu*I_src"
 )
 
-# Non-deme dynamics
+# Non-deme dynamics: Flow into recovered compartments.
 nonDemeDynamics <- c(
-  S_UK = '-parms$beta.t(t, parms) * S_UK * I_UK / parms$N_UK',
-  R_UK = 'parms$gamma * I_UK'
+  R_UK = "parms$gamma*I_UK - parms$mu*R_UK",
+  R_src = "parms$gamma*I_src - parms$mu*R_src"
 )
 
-# Build model
+# Build the demographic process with the simplified IR model.
 dm <- build.demographic.process(
   births = births,
   deaths = deaths,
@@ -151,66 +149,63 @@ show.demographic.process(
   theta = parms,
   x0 = x0,
   t0 = 2020,
-  t1 = 2022.5,
+  t1 = 2022,
   res = 500
 )
 
 
-# Likelihood calculation
-colik(
-  tree = dated_tree,
-  theta = parms,
-  demographic.process.model = dm,
-  x0 = x0,
-  t0 = 0,
-  res = 1000
-)
-
-# Objective function for MLE
-obj_fun <- function(lnbeta2020, lnbeta2020.5, lnbeta2021, lnbeta2022, lngamma, lnmu){
+# Updated Objective Function for MLE Including Six Beta Parameters
+obj_fun <- function(lnbeta2020.4, lnbeta2020.6, lnbeta2020.75, 
+                    lnbeta2020.95, lnbeta2021.15, lnbeta2021.2,
+                    lngamma, lnmu) {
   theta <- list(
-    beta2020 = exp(lnbeta2020),
-    beta2020.5 = exp(lnbeta2020.5),
-    beta2021 = exp(lnbeta2021),
-    beta2022 = exp(lnbeta2022),
-    gamma = exp(lngamma),
-    mu = exp(lnmu),
-    r = parms$r,
-    N_UK = parms$N_UK,
-    S0_UK = parms$S0_UK,
-    N0_src = parms$N0_src
+    beta2020.4    = exp(lnbeta2020.4),
+    beta2020.6    = exp(lnbeta2020.6),
+    beta2020.75   = exp(lnbeta2020.75),
+    beta2020.95   = exp(lnbeta2020.95),
+    beta2021.15   = exp(lnbeta2021.15),
+    beta2021.2    = exp(lnbeta2021.2),
+    gamma         = exp(lngamma),
+    mu            = exp(lnmu),
+    N0_src        = parms$N0_src
   )
   
+  # Link the time-varying beta function
   theta$beta.t <- parms$beta.t
   
-  -colik(
+  # Note: set t0 = 2020 to match the simulation time scale.
+  ll <- colik(
     tree = dated_tree,
     theta = theta,
     demographic.process.model = dm,
     x0 = x0,
-    t0 = 0,
+    t0 = 2020,
     res = 1000
   )
+  
+  return(-ll)
 }
 
-# Run optimization
+# Run optimization (update starting values to include beta2021.2)
 fit <- mle2(
   obj_fun,
   start = list(
-    lnbeta2020 = log(0.5),
-    lnbeta2020.5 = log(0.3),
-    lnbeta2021 = log(0.2),
-    lnbeta2022 = log(0.1),
-    lngamma = log(0.1),
-    lnmu = log(0.01)
+    lnbeta2020.4  = log(1),
+    lnbeta2020.6  = log(3),
+    lnbeta2020.75 = log(5),
+    lnbeta2020.95 = log(2),
+    lnbeta2021.15 = log(1),
+    lnbeta2021.2  = log(1e-6),   # Use a very small positive value instead of 0
+    lngamma       = log(0.14),
+    lnmu          = log(0.01)
   ),
   method = "Nelder-Mead",
   control = list(maxit = 1000)
 )
 
-# Results
+# Display model fit results
 AIC(fit)
 logLik(fit)
-coef(fit)
-exp(coef(fit))
-
+coefs <- coef(fit)
+print(coefs)
+print(exp(coefs))
