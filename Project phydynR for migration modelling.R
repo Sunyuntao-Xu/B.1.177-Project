@@ -154,7 +154,6 @@ show.demographic.process(
 )
 
 
-# Updated Objective Function for MLE Including Six Beta Parameters
 obj_fun <- function(lnbeta2020.4, lnbeta2020.6, lnbeta2020.75, 
                     lnbeta2020.95, lnbeta2021.15, lnbeta2021.2,
                     lngamma, lnmu) {
@@ -170,23 +169,32 @@ obj_fun <- function(lnbeta2020.4, lnbeta2020.6, lnbeta2020.75,
     N0_src        = parms$N0_src
   )
   
-  # Link the time-varying beta function
   theta$beta.t <- parms$beta.t
   
-  # Note: set t0 = 2020 to match the simulation time scale.
-  ll <- colik(
-    tree = dated_tree,
-    theta = theta,
-    demographic.process.model = dm,
-    x0 = x0,
-    t0 = 2020,
-    res = 1000
+  # We set t0 = 2020 to match our model's time scale.
+  ll <- tryCatch(
+    colik(
+      tree = dated_tree,
+      theta = theta,
+      demographic.process.model = dm,
+      x0 = x0,
+      t0 = 2020,
+      res = 1000
+    ),
+    error = function(e) {
+      message("Error in colik: ", e$message)
+      return(NA)
+    }
   )
   
-  return(-ll)
+  if(is.na(ll) || ll == -Inf) {
+    return(1e12)  # Return a large penalty if the likelihood is not evaluable
+  } else {
+    return(-ll)
+  }
 }
 
-# Run optimization (update starting values to include beta2021.2)
+# Run optimization with updated starting values (note: beta2021.2 initial guess is log(1e-6))
 fit <- mle2(
   obj_fun,
   start = list(
@@ -195,7 +203,7 @@ fit <- mle2(
     lnbeta2020.75 = log(5),
     lnbeta2020.95 = log(2),
     lnbeta2021.15 = log(1),
-    lnbeta2021.2  = log(1e-6),   # Use a very small positive value instead of 0
+    lnbeta2021.2  = log(1e-6),   # Use a very small value instead of 0
     lngamma       = log(0.14),
     lnmu          = log(0.01)
   ),
@@ -203,9 +211,25 @@ fit <- mle2(
   control = list(maxit = 1000)
 )
 
-# Display model fit results
+
+# Check the results
 AIC(fit)
+# [1] 2e+12
+
 logLik(fit)
+# 'log Lik.' -1e+12 (df=8)
+
 coefs <- coef(fit)
 print(coefs)
+# lnbeta2020.4  lnbeta2020.6 lnbeta2020.75 lnbeta2020.95 lnbeta2021.15  lnbeta2021.2       lngamma 
+#      1.0e+00       3.0e+00       5.0e+00       2.0e+00       1.0e+00       1.0e-06       1.4e-01 
+
+#         lnmu 
+#      1.0e-02
 print(exp(coefs))
+
+# lnbeta2020.4  lnbeta2020.6 lnbeta2020.75 lnbeta2020.95 lnbeta2021.15  lnbeta2021.2       lngamma 
+#    0.0000000     1.0986123     1.6094379     0.6931472     0.0000000   -13.8155106    -1.9661129 
+
+#         lnmu 
+#   -4.6051702 
