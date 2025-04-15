@@ -91,7 +91,8 @@ parms <- list(
   beta2020.75 = 5,     # Peak beta in September 2020
   beta2020.95 = 2,     # Beta in December 2020
   beta2021.15 = 1,     # Beta in February 2021
-  beta2021.2 = 0.1          # Beta after Febuary 2021
+  beta2021.2 = 0.1,          # Beta after Febuary 2021
+  m = 0.01             # migration rate 
 )
 
 # Define the time-varying beta function (force of infection)
@@ -118,12 +119,14 @@ births["I_UK", "I_UK"] <- "parms$beta.t(t, parms)*I_UK"
 births["I_src", "I_src"] <- "parms$beta.t(t, parms)*I_src"
 
 # We omit migration terms in the ODEs since balanced migration cancels out.
-migrations <- matrix("0", nrow=2, ncol=2, dimnames=list(demes, demes))
+migrations <- matrix("0", nrow = 2, ncol = 2, dimnames = list(demes, demes))
+migrations["I_UK", "I_src"] <- "parms$m * I_src"   # migrants from Europe to UK
+migrations["I_src", "I_UK"] <- "parms$m * I_UK"      # migrants from UK to Europe
 
 # Deaths represent losses from the infectious compartments due to recovery and natural death.
 deaths <- c(
-  I_UK = "parms$gamma*I_UK + parms$mu*I_UK",
-  I_src = "parms$gamma*I_src + parms$mu*I_src"
+  I_UK = "parms$mu * I_UK",
+  I_src = "parms$mu * I_src"
 )
 
 # Non-deme dynamics: Flow into recovered compartments.
@@ -156,7 +159,7 @@ show.demographic.process(
 
 obj_fun <- function(lnbeta2020.4, lnbeta2020.6, lnbeta2020.75, 
                     lnbeta2020.95, lnbeta2021.15, lnbeta2021.2,
-                    lngamma, lnmu) {
+                    lngamma, lnmu, lnm) {  # Add ln(m) here
   theta <- list(
     beta2020.4    = exp(lnbeta2020.4),
     beta2020.6    = exp(lnbeta2020.6),
@@ -166,12 +169,12 @@ obj_fun <- function(lnbeta2020.4, lnbeta2020.6, lnbeta2020.75,
     beta2021.2    = exp(lnbeta2021.2),
     gamma         = exp(lngamma),
     mu            = exp(lnmu),
+    m             = exp(lnm),     # Add migration rate here
     N0_src        = parms$N0_src
   )
   
   theta$beta.t <- parms$beta.t
   
-  # We set t0 = 2020 to match our model's time scale.
   ll <- tryCatch(
     colik(
       tree = dated_tree,
@@ -188,7 +191,7 @@ obj_fun <- function(lnbeta2020.4, lnbeta2020.6, lnbeta2020.75,
   )
   
   if(is.na(ll) || ll == -Inf) {
-    return(1e12)  # Return a large penalty if the likelihood is not evaluable
+    return(1e12)
   } else {
     return(-ll)
   }
@@ -203,13 +206,15 @@ fit <- mle2(
     lnbeta2020.75 = log(5),
     lnbeta2020.95 = log(2),
     lnbeta2021.15 = log(1),
-    lnbeta2021.2  = log(1e-6),   # Use a very small value instead of 0
+    lnbeta2021.2  = log(0.1),
     lngamma       = log(0.14),
-    lnmu          = log(0.01)
+    lnmu          = log(0.01),
+    lnm           = log(0.01)   # initial guess for migration rate
   ),
   method = "Nelder-Mead",
   control = list(maxit = 1000)
 )
+
 
 
 # Check the results
@@ -222,14 +227,16 @@ logLik(fit)
 coefs <- coef(fit)
 print(coefs)
 # lnbeta2020.4  lnbeta2020.6 lnbeta2020.75 lnbeta2020.95 lnbeta2021.15  lnbeta2021.2       lngamma 
-#      1.0e+00       3.0e+00       5.0e+00       2.0e+00       1.0e+00       1.0e-06       1.4e-01 
-
-#         lnmu 
-#      1.0e-02
-print(exp(coefs))
-
-# lnbeta2020.4  lnbeta2020.6 lnbeta2020.75 lnbeta2020.95 lnbeta2021.15  lnbeta2021.2       lngamma 
 #    0.0000000     1.0986123     1.6094379     0.6931472     0.0000000   -13.8155106    -1.9661129 
 
 #         lnmu 
 #   -4.6051702 
+
+
+print(exp(coefs))
+
+# lnbeta2020.4  lnbeta2020.6 lnbeta2020.75 lnbeta2020.95 lnbeta2021.15  lnbeta2021.2       lngamma 
+#      1.0e+00       3.0e+00       5.0e+00       2.0e+00       1.0e+00       1.0e-06       1.4e-01 
+
+#         lnmu 
+#      1.0e-02
