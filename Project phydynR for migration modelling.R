@@ -219,24 +219,23 @@ fit <- mle2(
 
 # Check the results
 AIC(fit)
-# [1] 2e+12
+# [1] 54832.06
 
 logLik(fit)
-# 'log Lik.' -1e+12 (df=8)
+# 'log Lik.' -27407.03 (df=9)
 
 coefs <- coef(fit)
 print(coefs)
 # lnbeta2020.4  lnbeta2020.6 lnbeta2020.75 lnbeta2020.95 lnbeta2021.15  lnbeta2021.2       lngamma 
-#    0.0000000     1.0986123     1.6094379     0.6931472     0.0000000   -13.8155106    -1.9661129 
-
-#         lnmu 
-#   -4.6051702 
+#   0.03500907    3.14717972    1.94438586    2.21743715   -1.35049836   -2.49414058   -0.93766426 
+#         lnmu           lnm 
+# -7.71327795   -2.25024089  
 
 
 print(exp(coefs))
 
-# lnbeta2020.4  lnbeta2020.6 lnbeta2020.75 lnbeta2020.95 lnbeta2021.15  lnbeta2021.2       lngamma 
-#      1.0e+00       3.0e+00       5.0e+00       2.0e+00       1.0e+00       1.0e-06       1.4e-01 
+#  lnbeta2020.4  lnbeta2020.6 lnbeta2020.75 lnbeta2020.95 lnbeta2021.15  lnbeta2021.2       lngamma 
+#  1.035629e+00  2.327034e+01  6.989338e+00  9.183764e+00  2.591111e-01  8.256738e-02  3.915413e-01
 
-#         lnmu 
-#      1.0e-02
+#          lnmu           lnm 
+#  4.468543e-04  1.053738e-01 
