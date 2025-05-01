@@ -120,8 +120,9 @@ births["I_src", "I_src"] <- "parms$beta.t(t, parms)*I_src"
 
 # We omit migration terms in the ODEs since balanced migration cancels out.
 migrations <- matrix("0", nrow = 2, ncol = 2, dimnames = list(demes, demes))
-migrations["I_UK", "I_src"] <- "parms$m * I_src"   # migrants from Europe to UK
-migrations["I_src", "I_UK"] <- "parms$m * I_UK"      # migrants from UK to Europe
+migrations["I_UK", "I_src"] <- "parms$m * I_UK"   # Migration from Europe to UK
+migrations["I_src", "I_UK"] <- "parms$m * I_UK"   # Migration from UK to Europe
+
 
 # Deaths represent losses from the infectious compartments due to recovery and natural death.
 deaths <- c(
@@ -159,7 +160,7 @@ show.demographic.process(
 
 obj_fun <- function(lnbeta2020.4, lnbeta2020.6, lnbeta2020.75, 
                     lnbeta2020.95, lnbeta2021.15, lnbeta2021.2,
-                    lngamma, lnmu, lnm) {  # Add ln(m) here
+                    lnmu, lnm) {  # Add ln(m) here
   theta <- list(
     beta2020.4    = exp(lnbeta2020.4),
     beta2020.6    = exp(lnbeta2020.6),
@@ -167,7 +168,7 @@ obj_fun <- function(lnbeta2020.4, lnbeta2020.6, lnbeta2020.75,
     beta2020.95   = exp(lnbeta2020.95),
     beta2021.15   = exp(lnbeta2021.15),
     beta2021.2    = exp(lnbeta2021.2),
-    gamma         = exp(lngamma),
+    gamma         = 0.14,
     mu            = exp(lnmu),
     m             = exp(lnm),     # Add migration rate here
     N0_src        = parms$N0_src
@@ -207,12 +208,11 @@ fit <- mle2(
     lnbeta2020.95 = log(2),
     lnbeta2021.15 = log(1),
     lnbeta2021.2  = log(0.1),
-    lngamma       = log(0.14),
     lnmu          = log(0.01),
     lnm           = log(0.01)   # initial guess for migration rate
   ),
   method = "Nelder-Mead",
-  control = list(maxit = 1000)
+  control = list(maxit = 3000)
 )
 
 
