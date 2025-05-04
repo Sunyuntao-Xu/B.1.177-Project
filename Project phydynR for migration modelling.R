@@ -215,27 +215,30 @@ fit <- mle2(
   control = list(maxit = 3000)
 )
 
+print(elapsed_time)
+
 
 
 # Check the results
 AIC(fit)
-# [1] 54832.06
+# [1] 55368.19
 
 logLik(fit)
-# 'log Lik.' -27407.03 (df=9)
+# 'log Lik.' -27676.09 (df=8)
 
 coefs <- coef(fit)
 print(coefs)
-# lnbeta2020.4  lnbeta2020.6 lnbeta2020.75 lnbeta2020.95 lnbeta2021.15  lnbeta2021.2       lngamma 
-#   0.03500907    3.14717972    1.94438586    2.21743715   -1.35049836   -2.49414058   -0.93766426 
-#         lnmu           lnm 
-# -7.71327795   -2.25024089  
+# lnbeta2020.4  lnbeta2020.6 lnbeta2020.75 lnbeta2020.95 lnbeta2021.15  lnbeta2021.2          lnmu 
+#    -1.389644      2.787364      1.752361      2.678468      2.825441    -10.883130     -6.420074 
+
+#        lnm 
+# -0.5024209  
 
 
 print(exp(coefs))
 
-#  lnbeta2020.4  lnbeta2020.6 lnbeta2020.75 lnbeta2020.95 lnbeta2021.15  lnbeta2021.2       lngamma 
-#  1.035629e+00  2.327034e+01  6.989338e+00  9.183764e+00  2.591111e-01  8.256738e-02  3.915413e-01
+# lnbeta2020.4  lnbeta2020.6 lnbeta2020.75 lnbeta2020.95 lnbeta2021.15  lnbeta2021.2          lnmu 
+# 2.491640e-01  1.623816e+01  5.768204e+00  1.456276e+01  1.686838e+01  1.877226e-05  1.628535e-03 
 
-#          lnmu           lnm 
-#  4.468543e-04  1.053738e-01 
+#          lnm 
+# 6.050646e-01
