@@ -1,7 +1,13 @@
+install.packages('optimParallel')
+
 library(dplyr)
 library(phydynR)
+library(optimParallel)
 
 Sys.setenv(LANGUAGE = "en")
+
+cl <- makeCluster(detectCores() /2)  # Use all but one core
+setDefaultCluster(cl)
 
 ####### Input B.1.177 tree for a try #######
 
@@ -160,7 +166,7 @@ show.demographic.process(
 
 obj_fun <- function(lnbeta2020.4, lnbeta2020.6, lnbeta2020.75, 
                     lnbeta2020.95, lnbeta2021.15, lnbeta2021.2,
-                    lnmu, lnm) {  # Add ln(m) here
+                    lnmu, lnm, lnI0_UK) {  # Add lnI0_UK here
   theta <- list(
     beta2020.4    = exp(lnbeta2020.4),
     beta2020.6    = exp(lnbeta2020.6),
@@ -170,8 +176,16 @@ obj_fun <- function(lnbeta2020.4, lnbeta2020.6, lnbeta2020.75,
     beta2021.2    = exp(lnbeta2021.2),
     gamma         = 0.14,
     mu            = exp(lnmu),
-    m             = exp(lnm),     # Add migration rate here
+    m             = exp(lnm),
     N0_src        = parms$N0_src
+  )
+  
+  # Now set x0 dynamically, with estimated I_UK
+  x0_dyn <- c(
+    I_UK = exp(lnI0_UK),   # now we estimate this!
+    I_src = 1000,          # keep this fixed unless you want to estimate it too
+    R_UK = 0,
+    R_src = 0
   )
   
   theta$beta.t <- parms$beta.t
@@ -181,7 +195,7 @@ obj_fun <- function(lnbeta2020.4, lnbeta2020.6, lnbeta2020.75,
       tree = dated_tree,
       theta = theta,
       demographic.process.model = dm,
-      x0 = x0,
+      x0 = x0_dyn,        # use the dynamic x0 here
       t0 = 2020,
       res = 1000
     ),
@@ -198,6 +212,8 @@ obj_fun <- function(lnbeta2020.4, lnbeta2020.6, lnbeta2020.75,
   }
 }
 
+
+
 # Run optimization with updated starting values (note: beta2021.2 initial guess is log(1e-6))
 fit <- mle2(
   obj_fun,
@@ -209,36 +225,35 @@ fit <- mle2(
     lnbeta2021.15 = log(1),
     lnbeta2021.2  = log(0.1),
     lnmu          = log(0.01),
-    lnm           = log(0.01)   # initial guess for migration rate
+    lnm           = log(0.01),
+    lnI0_UK       = log(100)  # initial guess based on your previous fixed value
   ),
   method = "Nelder-Mead",
   control = list(maxit = 3000)
 )
 
-print(elapsed_time)
-
 
 
 # Check the results
 AIC(fit)
-# [1] 55368.19
+# [1] 55198.51
 
 logLik(fit)
-# 'log Lik.' -27676.09 (df=8)
+# 'log Lik.' -27590.26 (df=9)
 
 coefs <- coef(fit)
 print(coefs)
 # lnbeta2020.4  lnbeta2020.6 lnbeta2020.75 lnbeta2020.95 lnbeta2021.15  lnbeta2021.2          lnmu 
-#    -1.389644      2.787364      1.752361      2.678468      2.825441    -10.883130     -6.420074 
+#   -0.8357754     2.9775500     1.6429063     2.7180352    -1.9776397    -0.1313246    -4.8527977 
 
-#        lnm 
-# -0.5024209  
+#        lnm       lnI0_UK 
+# -0.2589397     3.9504695   
 
 
 print(exp(coefs))
 
 # lnbeta2020.4  lnbeta2020.6 lnbeta2020.75 lnbeta2020.95 lnbeta2021.15  lnbeta2021.2          lnmu 
-# 2.491640e-01  1.623816e+01  5.768204e+00  1.456276e+01  1.686838e+01  1.877226e-05  1.628535e-03 
+#  0.433538174  19.639640352   5.170173678  15.150525446   0.138395502   0.876933106   0.007806507 
 
-#          lnm 
-# 6.050646e-01
+#          lnm       lnI0_UK 
+# 0.771869567  51.959755905 
