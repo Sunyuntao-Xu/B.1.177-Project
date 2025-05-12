@@ -88,9 +88,7 @@ betaNames <- paste0("beta", betaTimes)
 
 # Define parameters
 parms <- list(
-  gamma = 0.14,           # Recovery rate, e.g., 1/7 per day
-  mu = 0.01,              # Natural death rate
-  N0_src = 5e7,           # Initial number for Europe, if needed
+  gamma = 365 / 7,           # Recovery rate, e.g., 1/7 per day, and in year
   
   beta2020.4 = 1,      # Approximate beta in early June 2020
   beta2020.6 = 3,      # Approximate beta in late July 2020
@@ -98,190 +96,7 @@ parms <- list(
   beta2020.95 = 2,     # Beta in December 2020
   beta2021.15 = 1,     # Beta in February 2021
   beta2021.2 = 0.1,          # Beta after Febuary 2021
-  m = 0.01             # migration rate 
-)
-
-# Define the time-varying beta function (force of infection)
-parms$beta.t <- function(t, p){
-  approx(betaTimes, unlist(p[betaNames]), xout = t, rule=2)$y
-}
-
-# Set initial state: Only IR compartments, no S.
-x0 <- c(
-  I_UK = 100,
-  I_src = 1000,
-  R_UK = 0,
-  R_src = 0
-)
-
-# Define demes (infectious compartments) and nonDemes (recovered compartments)
-demes <- c("I_UK", "I_src")
-nonDemes <- c("R_UK", "R_src")
-
-# Births matrix: representing the generation of new infections
-# For both regions, new infections occur at rate beta(t)*I.
-births <- matrix("0", nrow=2, ncol=2, dimnames=list(demes, demes))
-births["I_UK", "I_UK"] <- "parms$beta.t(t, parms)*I_UK"
-births["I_src", "I_src"] <- "parms$beta.t(t, parms)*I_src"
-
-# We omit migration terms in the ODEs since balanced migration cancels out.
-migrations <- matrix("0", nrow = 2, ncol = 2, dimnames = list(demes, demes))
-migrations["I_UK", "I_src"] <- "parms$m * I_UK"   # Migration from Europe to UK
-migrations["I_src", "I_UK"] <- "parms$m * I_UK"   # Migration from UK to Europe
-
-
-# Deaths represent losses from the infectious compartments due to recovery and natural death.
-deaths <- c(
-  I_UK = "parms$mu * I_UK",
-  I_src = "parms$mu * I_src"
-)
-
-# Non-deme dynamics: Flow into recovered compartments.
-nonDemeDynamics <- c(
-  R_UK = "parms$gamma*I_UK - parms$mu*R_UK",
-  R_src = "parms$gamma*I_src - parms$mu*R_src"
-)
-
-# Build the demographic process with the simplified IR model.
-dm <- build.demographic.process(
-  births = births,
-  deaths = deaths,
-  migrations = migrations,
-  nonDemeDynamics = nonDemeDynamics,
-  parameterNames = names(parms),
-  rcpp = FALSE,
-  sde = FALSE
-)
-
-# Visualize the model dynamics over time (e.g., 2020 to 2022.5)
-show.demographic.process(
-  dm,
-  theta = parms,
-  x0 = x0,
-  t0 = 2020,
-  t1 = 2022,
-  res = 500
-)
-
-
-obj_fun <- function(lnbeta2020.4, lnbeta2020.6, lnbeta2020.75, 
-                    lnbeta2020.95, lnbeta2021.15, lnbeta2021.2,
-                    lnmu, lnm, lnI0_UK) {  # Add lnI0_UK here
-  theta <- list(
-    beta2020.4    = exp(lnbeta2020.4),
-    beta2020.6    = exp(lnbeta2020.6),
-    beta2020.75   = exp(lnbeta2020.75),
-    beta2020.95   = exp(lnbeta2020.95),
-    beta2021.15   = exp(lnbeta2021.15),
-    beta2021.2    = exp(lnbeta2021.2),
-    gamma         = 0.14,
-    mu            = exp(lnmu),
-    m             = exp(lnm),
-    N0_src        = parms$N0_src
-  )
-  
-  # Now set x0 dynamically, with estimated I_UK
-  x0_dyn <- c(
-    I_UK = exp(lnI0_UK),   # now we estimate this!
-    I_src = 1000,          # keep this fixed unless you want to estimate it too
-    R_UK = 0,
-    R_src = 0
-  )
-  
-  theta$beta.t <- parms$beta.t
-  
-  ll <- tryCatch(
-    colik(
-      tree = dated_tree,
-      theta = theta,
-      demographic.process.model = dm,
-      x0 = x0_dyn,        # use the dynamic x0 here
-      t0 = 2020,
-      res = 1000
-    ),
-    error = function(e) {
-      message("Error in colik: ", e$message)
-      return(NA)
-    }
-  )
-  
-  if(is.na(ll) || ll == -Inf) {
-    return(1e12)
-  } else {
-    return(-ll)
-  }
-}
-
-
-
-# Run optimization with updated starting values (note: beta2021.2 initial guess is log(1e-6))
-fit <- mle2(
-  obj_fun,
-  start = list(
-    lnbeta2020.4  = log(1),
-    lnbeta2020.6  = log(3),
-    lnbeta2020.75 = log(5),
-    lnbeta2020.95 = log(2),
-    lnbeta2021.15 = log(1),
-    lnbeta2021.2  = log(0.1),
-    lnmu          = log(0.01),
-    lnm           = log(0.01),
-    lnI0_UK       = log(100)  # initial guess based on your previous fixed value
-  ),
-  method = "Nelder-Mead",
-  control = list(maxit = 3000)
-)
-
-
-
-# Check the results
-AIC(fit)
-# [1] 55198.51
-
-logLik(fit)
-# 'log Lik.' -27590.26 (df=9)
-
-coefs <- coef(fit)
-print(coefs)
-# lnbeta2020.4  lnbeta2020.6 lnbeta2020.75 lnbeta2020.95 lnbeta2021.15  lnbeta2021.2          lnmu 
-#   -0.8357754     2.9775500     1.6429063     2.7180352    -1.9776397    -0.1313246    -4.8527977 
-
-#        lnm       lnI0_UK 
-# -0.2589397     3.9504695   
-
-
-print(exp(coefs))
-
-# lnbeta2020.4  lnbeta2020.6 lnbeta2020.75 lnbeta2020.95 lnbeta2021.15  lnbeta2021.2          lnmu 
-#  0.433538174  19.639640352   5.170173678  15.150525446   0.138395502   0.876933106   0.007806507 
-
-#          lnm       lnI0_UK 
-# 0.771869567  51.959755905 
-
-
-
-
-
-
-####### Removing N0_src, and estimate I_UK and I_src #######
-
-####### Define Model with Time-Varying beta(t) #######
-# Define time points for beta(t)
-betaTimes <- c(2020.4, 2020.6, 2020.75, 2020.95, 2021.15, 2021.2)
-betaNames <- paste0("beta", betaTimes)
-
-# Define parameters
-parms <- list(
-  gamma = 0.14,           # Recovery rate, e.g., 1/7 per day
-  mu = 0.01,              # Natural death rate
-  
-  beta2020.4 = 1,      # Approximate beta in early June 2020
-  beta2020.6 = 3,      # Approximate beta in late July 2020
-  beta2020.75 = 5,     # Peak beta in September 2020
-  beta2020.95 = 2,     # Beta in December 2020
-  beta2021.15 = 1,     # Beta in February 2021
-  beta2021.2 = 0.1,          # Beta after Febuary 2021
-  m = 0.01             # migration rate 
+  m = 1             # migration rate 
 )
 
 # Define the time-varying beta function (force of infection)
@@ -315,13 +130,15 @@ migrations["I_src", "I_UK"] <- "parms$m * I_UK"   # Migration from UK to Europe
 
 # Deaths represent losses from the infectious compartments due to recovery and natural death.
 deaths <- c(
-  I_UK = "parms$mu * I_UK",
-  I_src = "parms$mu * I_src")
+  I_UK = "parms$gamma * I_UK",
+  I_src = "parms$gamma * I_src"
+)
+
 
 # Non-deme dynamics: Flow into recovered compartments.
 nonDemeDynamics <- c(
-  R_UK = "parms$gamma*I_UK - parms$mu*R_UK",
-  R_src = "parms$gamma*I_src - parms$mu*R_src"
+  R_UK = "parms$gamma*I_UK",
+  R_src = "parms$gamma*I_src"
 )
 
 # Build the demographic process with the simplified IR model.
@@ -348,7 +165,7 @@ show.demographic.process(
 
 obj_fun <- function(lnbeta2020.4, lnbeta2020.6, lnbeta2020.75, 
                     lnbeta2020.95, lnbeta2021.15, lnbeta2021.2,
-                    lnmu, lnm, lnI0_UK, lnI0_src) {
+                    lnm, lnI0_UK, lnI0_src) {
   # Add lnI0_UK and lnI0_src here
   theta <- list(
     beta2020.4    = exp(lnbeta2020.4),
@@ -357,8 +174,7 @@ obj_fun <- function(lnbeta2020.4, lnbeta2020.6, lnbeta2020.75,
     beta2020.95   = exp(lnbeta2020.95),
     beta2021.15   = exp(lnbeta2021.15),
     beta2021.2    = exp(lnbeta2021.2),
-    gamma         = 0.14,
-    mu            = exp(lnmu),
+    gamma         = 365 / 7,
     m             = exp(lnm)
     )
   
@@ -407,15 +223,41 @@ fit <- mle2(
     lnbeta2020.95 = log(2),
     lnbeta2021.15 = log(1),
     lnbeta2021.2  = log(0.1),
-    lnmu          = log(0.01),
     lnm           = log(0.01),
     lnI0_UK       = log(10),
-    lnI0_src      = log(100)  # new parameter added
-  )
-  ,
+    lnI0_src      = log(100)
+  ),
   method = "Nelder-Mead",
-  control = list(maxit = 2000)
+  control = list(maxit = 3000)
 )
+
+
+
+
+# Check the results
+AIC(fit)
+# [1] 55198.51
+
+logLik(fit)
+# 'log Lik.' -27590.26 (df=9)
+
+coefs <- coef(fit)
+print(coefs)
+# lnbeta2020.4  lnbeta2020.6 lnbeta2020.75 lnbeta2020.95 lnbeta2021.15  lnbeta2021.2          lnmu 
+#   -0.8357754     2.9775500     1.6429063     2.7180352    -1.9776397    -0.1313246    -4.8527977 
+
+#        lnm       lnI0_UK 
+# -0.2589397     3.9504695   
+
+
+print(exp(coefs))
+
+# lnbeta2020.4  lnbeta2020.6 lnbeta2020.75 lnbeta2020.95 lnbeta2021.15  lnbeta2021.2          lnmu 
+#  0.433538174  19.639640352   5.170173678  15.150525446   0.138395502   0.876933106   0.007806507 
+
+#          lnm       lnI0_UK 
+# 0.771869567  51.959755905 
+
 
 
 
