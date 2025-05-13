@@ -282,3 +282,28 @@ print(exp(coefs))
 
 #          lnm       lnI0_UK      lnI0_src 
 # 8.954100e-01  4.188401e-01  1.328972e+00 
+
+
+####### mu removed, I_UK an I_src estimated, adjusted to per year #######
+AIC(fit)
+# [1] 196301.9
+
+logLik(fit)
+# 'log Lik.' -98141.93 (df=9)
+
+coefs <- coef(fit)
+print(coefs)
+
+# lnbeta2020.4  lnbeta2020.6 lnbeta2020.75 lnbeta2020.95 lnbeta2021.15  lnbeta2021.2           lnm 
+#     3.590588      3.441364      3.675585      4.285186     -7.394489     -2.082821     -6.706446 
+
+#      lnI0_UK      lnI0_src 
+#     2.768535      2.194466 
+
+print(exp(coefs))
+
+# lnbeta2020.4  lnbeta2020.6 lnbeta2020.75 lnbeta2020.95 lnbeta2021.15  lnbeta2021.2           lnm 
+# 3.625540e+01  3.122953e+01  3.947175e+01  7.261605e+01  6.146308e-04  1.245783e-01  1.223003e-03 
+
+#      lnI0_UK      lnI0_src 
+# 1.593528e+01  8.975211e+00
