@@ -90,12 +90,12 @@ betaNames <- paste0("beta", betaTimes)
 parms <- list(
   gamma = 365 / 7,           # Recovery rate, e.g., 1/7 per day, and in year
   
-  beta2020.4 = 1,      # Approximate beta in early June 2020
-  beta2020.6 = 3,      # Approximate beta in late July 2020
-  beta2020.75 = 5,     # Peak beta in September 2020
-  beta2020.95 = 2,     # Beta in December 2020
-  beta2021.15 = 1,     # Beta in February 2021
-  beta2021.2 = 0.1,          # Beta after Febuary 2021
+  beta2020.4 = 50,      # Approximate beta in early June 2020
+  beta2020.6 = 100,      # Approximate beta in late July 2020
+  beta2020.75 = 400,     # Peak beta in September 2020
+  beta2020.95 = 300,     # Beta in December 2020
+  beta2021.15 = 20,     # Beta in February 2021
+  beta2021.2 = 10,          # Beta after Febuary 2021
   m = 1             # migration rate 
 )
 
@@ -217,14 +217,14 @@ obj_fun <- function(lnbeta2020.4, lnbeta2020.6, lnbeta2020.75,
 fit <- mle2(
   obj_fun,
   start = list(
-    lnbeta2020.4  = log(1),
-    lnbeta2020.6  = log(3),
-    lnbeta2020.75 = log(5),
-    lnbeta2020.95 = log(2),
-    lnbeta2021.15 = log(1),
-    lnbeta2021.2  = log(0.1),
-    lnm           = log(0.01),
-    lnI0_UK       = log(10),
+    lnbeta2020.4  = log(50),
+    lnbeta2020.6  = log(100),
+    lnbeta2020.75 = log(400),
+    lnbeta2020.95 = log(300),
+    lnbeta2021.15 = log(20),
+    lnbeta2021.2  = log(10),
+    lnm           = log(1),         
+    lnI0_UK       = log(10),        
     lnI0_src      = log(100)
   ),
   method = "Nelder-Mead",
