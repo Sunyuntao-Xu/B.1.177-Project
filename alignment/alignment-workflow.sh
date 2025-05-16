@@ -26,6 +26,12 @@ seqkit grep -f "E:/GISAID_selected_sequences.txt" "E:/msaCodon_0201_fixed.fasta"
 cd C:\trimAl
 .\trimal.exe -in "E:\msaCodon_0201_B.1.177.cleaned.fasta" -out "E:\msaCodon_0201_B.1.177.final_trimmed.fasta" -gt 0.9 -cons 95
 
+# Use seqkit to clean out all gaps
+seqkit replace -p " " -r "_" \
+  -o E:/msaCodon_0201_B.1.177.final_trimmed.fasta \
+  E:\msaCodon_0201_B.1.177.final_trimmed_nospace.fasta
+
+
 # Align B.1.177 sequences to masked reference using MAFFT --add
 mafft --keeplength --add "E:/msaCodon_0201_B.1.177.cleaned.fasta" \
       "E:/Reference Alignments/merged_reference_sequences_aligned_masked.fasta" \
