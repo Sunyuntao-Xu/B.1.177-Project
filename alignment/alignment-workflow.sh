@@ -19,9 +19,9 @@ mafft --auto "E:/Reference Alignments/merged_reference_sequences.fasta" > "E:/Re
 
 
 # Use seqkit to clean out all gaps in label
-seqkit replace -p " " -r "_" \
-  -o E:/msaCodon_0201_fixed.fasta \
-  E:\msaCodon_0201_fixed_nospace.fasta
+seqkit replace -p " " -r "_" `
+  -o E:/msaCodon_0201_fixed_nospace.fasta `
+  E:/msaCodon_0201_fixed.fasta
 
 
 # Extract B.1.177 sequences using SeqKit
