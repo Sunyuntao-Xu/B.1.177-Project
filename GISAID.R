@@ -3,6 +3,7 @@ library(ggplot2)
 library(RColorBrewer)
 library(dplyr)
 library(readr)
+library(tidyr)
 
 # Load the metadata.tsv fast
 GISAID_metadata <- fread("E:/metadata_tsv_2025_02_09.tar/metadata.tsv", sep="\t", header=TRUE, showProgress=TRUE)
@@ -174,10 +175,13 @@ table(B.1.177_GISAID_Europe$Country)
 
 ####### Extract names for fasta alignment analysis #######
 # Extract just the sequence names from the 'Virus name' column
+# Replace spaces with underscores in the 'Virus name' column
+
 GISAID_selected_sequences <- B.1.177_GISAID_Europe$`Virus name`
 
+
 # Save to a text file for later filtering
-write_lines(GISAID_selected_sequences, "E:/GISAID_selected_sequences.txt")
+write_lines(GISAID_selected_sequences, "E:/GISAID_selected_sequences.txt", sep = "\n")
 
 
 ####### Exclude countries with too small samples #######
@@ -259,3 +263,69 @@ sampled_data <- B.1.177_GISAID_Europe %>%
 # Print sample count breakdown
 print(table(sampled_data$Country))
 print(paste("Total selected:", nrow(sampled_data)))
+
+
+####### Load Masking Sites #######
+cleaning_site <- read.csv("C:/Users/xusun/Desktop/Phylogenetic Project/Codes/cleaning_site_masking.csv")
+
+# Keep only rows with FILTER == "mask"
+mask_only <- cleaning_site[cleaning_site$FILTER == "mask", ]
+
+# Minus 54 for the row
+# Expand ranges like "1-55" into a sequence of numbers
+expand_pos <- function(pos_str) {
+  if (grepl("-", pos_str)) {
+    range_vals <- as.integer(unlist(strsplit(pos_str, "-")))
+    return(seq(range_vals[1], range_vals[2]))
+  } else {
+    return(as.integer(pos_str))
+  }
+}
+
+# Apply the function to every row of POS and unnest
+mask_expanded <- mask_only %>%
+  rowwise() %>%
+  mutate(POS_expanded = list(expand_pos(POS))) %>%
+  unnest(POS_expanded) %>%
+  ungroup()
+
+# Subtract 54 from all positions
+mask_expanded <- mask_expanded %>%
+  mutate(POS_final = POS_expanded - 54)
+
+# Keep only relevant columns, if needed
+mask_final <- mask_expanded %>%
+  select(POS_final, REF, ALT, FILTER, EXC, GENE, AA_POS, AA_REF, AA_ALT)
+
+# Filter out negative positions
+mask_final <- mask_expanded %>%
+  mutate(POS_final = POS_expanded - 54) %>%
+  filter(POS_final > 0) %>%
+  select(POS_final, REF, ALT, FILTER, EXC, GENE, AA_POS, AA_REF, AA_ALT)
+
+# Manually add the new sites
+extra_sites <- data.frame(
+  POS_final = c(1095, 5575, 6797, 7274, 13893, 28041, 29308),
+  REF = c("G", "G", "A", "G", "A", "A", "C"),
+  ALT = c("T", NA, NA, NA, "T", NA, NA),
+  FILTER = "mask",
+  EXC = NA,
+  GENE = NA,
+  AA_POS = NA,
+  AA_REF = NA,
+  AA_ALT = NA
+)
+
+# Bind to the existing mask_final
+mask_final_combined <- bind_rows(mask_final, extra_sites)
+
+mask_final_combined <- mask_final_combined %>%
+  arrange(POS_final)
+
+writeLines(paste(mask_final_combined$POS_final, collapse = ","), "E:/positions_comma.txt")
+
+
+
+
+# Optional: Save it to a new CSV file
+write.csv(mask_only, "C:/Users/xusun/Desktop/Phylogenetic Project/Codes/cleaning_site_mask_only.csv", row.names = FALSE)
