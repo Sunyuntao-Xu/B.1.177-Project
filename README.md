@@ -66,6 +66,7 @@ Scripts related to **sequence alignment**, **reference preparation**, and **mask
 - [`Biopython`](https://biopython.org/): gap-only column removal
 - [`R` & `phydynR`](https://github.com/emvolz-phylodynamics/phydynR): migration + phylodynamic modeling
 - [`PowerShell`](https://learn.microsoft.com/en-us/powershell/): Windows-based sequence inspection and mutation grouping
+- [`trimAl`](https://vicfero.github.io/trimal/):automated removal of highly gappy or poorly conserved alignment columns
 
 ---
 
