@@ -83,3 +83,11 @@ Import-Csv E:/pos_A28095_check.tsv -Delimiter "`t" -Header "ID", "Base" | Group-
 # C29362 → 29308
 seqkit subseq -r 29308:29308 E:/msaCodon_0201_B.1.177.final_trimmed.fasta | seqkit fx2tab > E:/pos_C29362_check.tsv
 Import-Csv E:/pos_C29362_check.tsv -Delimiter "`t" -Header "ID", "Base" | Group-Object Base | Select-Object Count, Name
+
+# Mask those sites
+$pos = Get-Content "E:/positions_to_mask.txt" | ForEach-Object { "-p $($_):N" }
+
+$cmd = "seqkit mutate $($pos -join ' ') E:/msaCodon_0201_B.1.177.final_trimmed_copy.fasta -o E:/masked_output.fasta"
+
+Invoke-Expression $cmd
+
