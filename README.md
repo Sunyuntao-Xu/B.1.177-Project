@@ -64,7 +64,7 @@ Scripts related to **sequence alignment**, **reference preparation**, and **mask
 - [`MAFFT`](https://mafft.cbrc.jp/alignment/software/): reference and sample alignment
 - [`seqkit`](https://bioinf.shenwei.me/seqkit/): FASTA filtering, mutation masking
 - [`Biopython`](https://biopython.org/): gap-only column removal
-- [`R` & `phydynR`](https://cran.r-project.org/web/packages/phydynR/index.html): migration + phylodynamic modeling
+- [`R` & `phydynR`](https://github.com/emvolz-phylodynamics/phydynR): migration + phylodynamic modeling
 - [`PowerShell`](https://learn.microsoft.com/en-us/powershell/): Windows-based sequence inspection and mutation grouping
 
 ---
