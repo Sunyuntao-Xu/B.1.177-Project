@@ -1,69 +1,105 @@
-# B.1.177-Project
+# 🧬 B.1.177-Project: SARS-CoV-2 Alignment & Phylodynamic Analysis Pipeline
 
-This repository contains the full analysis pipeline and related scripts for the **B.1.177 SARS-CoV-2 lineage** project, focusing on:
+This repository contains a complete alignment preparation and modeling pipeline for the **B.1.177 lineage of SARS-CoV-2**, including:
 
-- Reference alignment and GISAID sequence preparation
-- Case smoothing and incidence estimation
-- PhydynR-based migration and phylodynamic modeling
-- UShER reference validation
-- Data cleaning and preparation
+- Reference construction and sequence cleaning
+- Key mutation inspection and site masking
+- Finalized alignment for phylodynamic modeling
+- Case smoothing and migration modeling using **PhydynR**
 
 ---
 
-## 📁 Folder Overview
+## 📁 Folder Structure
 
 ### `alignment/`
-Contains all code related to the alignment workflow, including:
+Scripts related to **sequence alignment**, **reference preparation**, and **masking**.
 
-- Merging Wuhan-Hu-1 with 11 UShER reference sequences
-- Aligning references using MAFFT
-- Manual masking of alignment ends
-- Selecting B.1.177 sequences from GISAID using SeqKit
-- Aligning B.1.177 sequences to masked references using `mafft --add --keeplength`
-- Python script to remove gap-only columns from final alignment
-
-**Key scripts:**
-- `B.1.177_alignment_cleanup_pipeline.sh`: Full pipeline summary in shell script form
-- `Delete gap only columns for alignments.py`: Removes columns that are gaps in all sequences
+| Script | Description |
+|--------|-------------|
+| `B.1.177_alignment_cleanup_pipeline.sh` | Full alignment processing pipeline (reference merge, sequence extraction, trimming) |
+| `remove_gap_only_columns.py` | Removes alignment columns that are gaps in all sequences |
+| `B.1.177_key_mutation_retrive.sh` | Extracts base states at key mutation sites for inspection |
+| `B.1.177_sites_check_and_masking.sh` | Summarizes key site frequencies and masks selected sites with `seqkit mutate` |
+| `split_alignment.sh` | Optional script to split large FASTA files for batch handling |
 
 ---
 
-## 📜 Script Overview
+## 📜 Main Analysis Scripts
 
 ### `PhydynR Test Code and UShER Selection.R`
-- Tests initial setup of PhydynR
-- Performs UShER reference validation and tree dating for reference selection
+- Validates UShER reference trees
+- Aligns and dates reference sequences
+- Sets up initial `phydynR` test runs
 
 ### `Project phydynR for migration modelling.R`
-- Main PhydynR modeling script
-- Implements **SIR compartment model with migration**
-- Includes time-stratified beta(t) function and deme migration matrices
+- Main phylodynamic modeling script
+- Implements **SIR model with migration** across geographic demes
+- Incorporates **time-varying transmission rate** `β(t)`
+- Calibrated using alignment and smoothed case data
 
 ### `GISAID.R`
-- Parses and filters GISAID metadata
-- Matches sequence IDs to external lists (e.g. for B.1.177 selection)
+- Parses full GISAID metadata
+- Selects B.1.177 sequences by ID list
+- Optionally filters by country, date, or lineage
 
 ### `B.1.177 case smoothing.R`
-- Smooths case incidence data from COG-UK and UKHSA
-- Uses GAM (Generalized Additive Models) to estimate growth rates
-- Identifies key inflection points in B.1.177 spread for time-stratified modeling
+- Applies **Generalized Additive Models (GAMs)** to UKHSA/COG-UK data
+- Estimates B.1.177 growth rate and inflection points
+- Provides time windows for time-stratified modeling in `phydynR`
 
 ---
 
-## 📊 Data Requirements
+## 📊 Required Input Files
 
-**Required Input Files:**
-- GISAID full alignment: `msaCodon_0201_fixed.fasta`
-- GISAID metadata selection list: `GISAID_selected_sequences.txt`
-- Reference sequences (FASTA format): Wuhan-Hu-1 + 11 UShER isolates
-- UKHSA/COG-UK case data (CSV format) for smoothing
+| File | Description |
+|------|-------------|
+| `msaCodon_0201_fixed.fasta` | Full codon-aware alignment from GISAID |
+| `GISAID_selected_sequences.txt` | List of selected B.1.177 sequence headers |
+| `Wuhan-Hu-1.fasta` + 11 UShER reference FASTAs | Reference sequences for anchoring alignment |
+| UKHSA/COG-UK CSV case data | For smoothing and time-series modeling |
 
 ---
 
-## ⚙️ Tools Used
+## ⚙️ Tools & Dependencies
 
-- [MAFFT](https://mafft.cbrc.jp/alignment/software/): multiple sequence alignment
-- [SeqKit](https://bioinf.shenwei.me/seqkit/): FASTA/FASTQ filtering
-- [Biopython](https://biopython.org/): gap-removal script
-- [R](https://www.r-project.org/): smoothing, phylodynamic modeling
-- [PhydynR](https://cran.r-project.org/web/packages/phydynR/index.html): compartmental modeling from phylogenies
+- [`MAFFT`](https://mafft.cbrc.jp/alignment/software/): reference and sample alignment
+- [`seqkit`](https://bioinf.shenwei.me/seqkit/): FASTA filtering, mutation masking
+- [`Biopython`](https://biopython.org/): gap-only column removal
+- [`R` & `phydynR`](https://cran.r-project.org/web/packages/phydynR/index.html): migration + phylodynamic modeling
+- [`PowerShell`](https://learn.microsoft.com/en-us/powershell/): Windows-based sequence inspection and mutation grouping
+
+---
+
+## 🔁 Pipeline Summary
+
+1. **Reference Preparation**
+    - Merge Wuhan-Hu-1 and UShER sequences
+    - Align with MAFFT
+    - Manually trim ends if needed
+
+2. **GISAID Sequence Extraction**
+    - Select B.1.177 sequences via `seqkit grep`
+    - Align to references using `mafft --add --keeplength`
+
+3. **Alignment Cleaning**
+    - Remove gap-only columns (`remove_gap_only_columns.py`)
+    - Mask problematic or hypervariable sites (`seqkit mutate`)
+
+4. **Mutation Inspection**
+    - Extract base state at key SNPs
+    - Group and summarize by base using PowerShell
+
+5. **Phylodynamic Modeling**
+    - Smooth case data using GAM
+    - Construct SIR + migration model using `phydynR`
+    - Time-stratified modeling of B.1.177 spread
+
+---
+
+## 📌 Example Usage
+
+```bash
+bash alignment/B.1.177_alignment_cleanup_pipeline.sh
+python alignment/remove_gap_only_columns.py
+bash alignment/B.1.177_sites_check_and_masking.sh
+Rscript phylodynamics/Project_phydynR_for_migration_modelling.R
