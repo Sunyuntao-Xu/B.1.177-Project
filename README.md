@@ -26,12 +26,12 @@ Scripts related to **sequence alignment**, **reference preparation**, and **mask
 
 ## 📜 Main Analysis Scripts
 
-### `PhydynR Test Code and UShER Selection.R`
+### `PhydynR_Test_Code_and_UShER_Selection.R`
 - Validates UShER reference trees
 - Aligns and dates reference sequences
 - Sets up initial `phydynR` test runs
 
-### `Project phydynR for migration modelling.R`
+### `Project_phydynR_for_migration_modelling.R`
 - Main phylodynamic modeling script
 - Implements **SIR model with migration** across geographic demes
 - Incorporates **time-varying transmission rate** `β(t)`
@@ -42,13 +42,12 @@ Scripts related to **sequence alignment**, **reference preparation**, and **mask
 - Selects B.1.177 sequences by ID list
 - Optionally filters by country, date, or lineage
 
-### `B.1.177 case smoothing.R`
+### `B.1.177_case_smoothing.R`
 - Applies **Generalized Additive Models (GAMs)** to UKHSA/COG-UK data
 - Estimates B.1.177 growth rate and inflection points
 - Provides time windows for time-stratified modeling in `phydynR`
 
 ---
-
 ## 📊 Required Input Files
 
 | File | Description |
