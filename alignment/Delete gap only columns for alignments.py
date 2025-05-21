@@ -3,7 +3,7 @@ from Bio.Align import MultipleSeqAlignment
 
 # Step A: Define file paths
 # Use raw strings to avoid issues with backslashes on Windows
-input_file = r"E:\msaCodon_0201_B.1.177.fasta"
+input_file = r"E:\B.1.177_extracted.fasta"
 output_file = r"E:\msaCodon_0201_B.1.177.cleaned.fasta"
 print("Step A: File paths set.")
 
