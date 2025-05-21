@@ -19,7 +19,39 @@ mafft --auto "E:/Reference Alignments/merged_reference_sequences.fasta" > "E:/Re
 
 
 # Extract B.1.177 sequences using SeqKit
-seqkit grep --by-name -f E:/GISAID_selected_sequences.txt E:/msaCodon_0201_fixed.fasta > E:/msaCodon_0201_B.1.177.fasta
+seqkit grep --by-name -f E:/GISAID_selected_sequences.txt E:/msaCodon_0201_fixed.fasta > E:\B.1.177_extracted.fasta
+
+# Alternative B.1.177 sequences using bash command
+
+# Set file paths
+$fastaFile = "E:\msaCodon_0201_fixed.fasta"
+$nameListFile = "E:\GISAID_selected_sequences.txt"
+$outputFile = "E:\B.1.177_extracted.fasta"
+
+# Read target headers into a hashset for fast lookup
+$targetNames = Get-Content $nameListFile | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne "" }
+$targetSet = @{}
+foreach ($name in $targetNames) {
+    $targetSet[$name] = $true
+}
+
+# Read FASTA and extract matching sequences
+$writeBlock = $false
+Get-Content $fastaFile | ForEach-Object {
+    if ($_ -like ">*") {
+        $header = $_.Substring(1).Trim()
+        if ($targetSet.ContainsKey($header)) {
+            $writeBlock = $true
+            Add-Content -Path $outputFile -Value $_
+        }
+        else {
+            $writeBlock = $false
+        }
+    }
+    elseif ($writeBlock) {
+        Add-Content -Path $outputFile -Value $_
+    }
+}
 
 # Use trimAl to remove highly gappy columns (>10% gaps) from B.1.177 sequences while preserving at least 95% of the alignment,
 # ensuring cleaner alignment and more consistent structure before aligning to the reference
