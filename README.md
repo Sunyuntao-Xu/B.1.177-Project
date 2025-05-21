@@ -23,7 +23,7 @@ Contains all code related to the alignment workflow, including:
 - Python script to remove gap-only columns from final alignment
 
 **Key scripts:**
-- `alignment-workflow.sh`: Full pipeline summary in shell script form
+- `B.1.177_alignment_cleanup_pipeline.sh`: Full pipeline summary in shell script form
 - `Delete gap only columns for alignments.py`: Removes columns that are gaps in all sequences
 
 ---
