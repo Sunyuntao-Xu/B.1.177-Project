@@ -1,18 +1,18 @@
-# Define input and output paths
-$input = "E:/masked_output.fasta"
-$output = "E:/key_site_filtered_B.1.177.fasta"
+# Position 22227 → Expect T
+$bad1 = Import-Csv "E:/pos_22227_check.tsv" -Delimiter "`t" -Header "ID", "Base" |
+    Where-Object { $_.Base -ne "T" } | Select-Object -ExpandProperty ID
 
-# Position 1: 22173 (expect T)
-seqkit subseq -r 22173:22173 $input | seqkit fx2tab | where { $_ -match "\tT$" } | foreach { ($_ -split "`t")[0] } > ids_pos1.txt
+# Position 23403 → Expect G
+$bad2 = Import-Csv "E:/pos_23403_check.tsv" -Delimiter "`t" -Header "ID", "Base" |
+    Where-Object { $_.Base -ne "G" } | Select-Object -ExpandProperty ID
 
-# Position 2: 23349 (expect G)
-seqkit subseq -r 23349:23349 $input | seqkit fx2tab | where { $_ -match "\tG$" } | foreach { ($_ -split "`t")[0] } > ids_pos2.txt
+# Position 28932 → Expect T
+$bad3 = Import-Csv "E:/pos_28932_check.tsv" -Delimiter "`t" -Header "ID", "Base" |
+    Where-Object { $_.Base -ne "T" } | Select-Object -ExpandProperty ID
 
-# Position 3: 28878 (expect T)
-seqkit subseq -r 28878:28878 $input | seqkit fx2tab | where { $_ -match "\tT$" } | foreach { ($_ -split "`t")[0] } > ids_pos3.txt
+# Position 29645 → Expect T
+$bad4 = Import-Csv "E:/pos_29645_check.tsv" -Delimiter "`t" -Header "ID", "Base" |
+    Where-Object { $_.Base -ne "T" } | Select-Object -ExpandProperty ID
 
-# Position 4: 29591 (expect T)
-seqkit subseq -r 29591:29591 $input | seqkit fx2tab | where { $_ -match "\tT$" } | foreach { ($_ -split "`t")[0] } > ids_pos4.txt
-
-seqkit common ids_pos1.txt ids_pos2.txt ids_pos3.txt ids_pos4.txt > B.1.177_desired_ids.txt
-seqkit grep -f B.1.177_desired_ids.txt $input > $output
+$allBad = $bad1 + $bad2 + $bad3 + $bad4 | Sort-Object -Unique
+$allBad > "E:/B.1.177_exclude_ids.txt"
