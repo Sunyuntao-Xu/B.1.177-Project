@@ -14,8 +14,10 @@ $bad3 = Import-Csv "E:/pos_28932_check.tsv" -Delimiter "`t" -Header "ID", "Base"
 $bad4 = Import-Csv "E:/pos_29645_check.tsv" -Delimiter "`t" -Header "ID", "Base" |
     Where-Object { $_.Base -ne "T" } | Select-Object -ExpandProperty ID
 
+# Combine and write cleanly
 $allBad = $bad1 + $bad2 + $bad3 + $bad4 | Sort-Object -Unique
-$allBad > "E:/B.1.177_exclude_ids.txt"
+$allBad | Set-Content -Encoding UTF8 "E:/B.1.177_exclude_ids.txt"
+
 
 
 # Fix the GISAID ID list by replacing spaces with underscores
