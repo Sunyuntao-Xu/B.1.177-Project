@@ -42,29 +42,40 @@ $wanted | Sort-Object -Unique > "E:\B.1.177_desired_ids.txt"
 
 
 # Set file paths
-$fastaFile = "E:\masked_output.fasta"                    # ✅ Use the masked FASTA
-$nameListFile = "E:\B.1.177_desired_ids.txt"             # ✅ List of wanted sequence IDs (with _ not spaces)
-$outputFile = "E:\key_site_filtered_B.1.177.fasta"       # ✅ Output file
+$fastaFile = "E:\masked_output.fasta"
+$nameListFile = "E:\B.1.177_desired_ids.txt"
+$outputFile = "E:\key_site_filtered_B.1.177.fasta"
 
-# Load target headers into hashset
-$targetNames = Get-Content $nameListFile | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne "" }
-$targetSet = @{}
-foreach ($name in $targetNames) {
-    $targetSet[$name] = $true
+# Load desired sequence names into a HashSet
+$targetSet = [System.Collections.Generic.HashSet[string]]::new()
+Get-Content $nameListFile | ForEach-Object {
+    $name = $_.Trim()
+    if ($name -ne "") { $null = $targetSet.Add($name) }
 }
 
-# Read masked FASTA and extract matching sequences
+# Open FASTA reader and writer
+$reader = [System.IO.StreamReader]::new($fastaFile)
+$writer = [System.IO.StreamWriter]::new($outputFile, $false, [System.Text.Encoding]::UTF8)
+$writer.NewLine = "`n"  # Use Unix line endings for compact output
+
+# Extract matching sequences
 $writeBlock = $false
-Get-Content $fastaFile | ForEach-Object {
-    if ($_ -like ">*") {
-        $header = $_.Substring(1).Trim()
-        if ($targetSet.ContainsKey($header)) {
-            $writeBlock = $true
-            Add-Content -Path $outputFile -Value $_
-        } else {
-            $writeBlock = $false
-        }
+
+while (-not $reader.EndOfStream) {
+    $line = $reader.ReadLine()
+
+    if ($line.StartsWith(">")) {
+        $header = $line.Substring(1).Trim()
+        $writeBlock = $targetSet.Contains($header)
+        if ($writeBlock) { $writer.WriteLine($line) }
     } elseif ($writeBlock) {
-        Add-Content -Path $outputFile -Value $_
+        $writer.WriteLine($line)
     }
 }
+
+# Close the streams
+$reader.Close()
+$writer.Close()
+
+Write-Output "✅ FASTA extraction complete: $outputFile"
+
