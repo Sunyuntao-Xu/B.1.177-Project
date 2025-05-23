@@ -32,52 +32,6 @@ Get-Content "E:\B.1.177_exclude_ids.txt" |
     Where-Object { $_ -ne "" } |
     Set-Content "E:\B.1.177_exclude_ids_nospace.txt"
 
-$all = Get-Content "E:\GISAID_selected_sequences_nospace.txt"
-$bad = Get-Content "E:\B.1.177_exclude_ids_nospace.txt"
+seqkit grep -f "E:\B.1.177_exclude_ids_nospace.txt" -v "E:\masked_output.fasta" -o "E:\key_site_seqkit_filtered_B.1.177.fasta"
 
-# Continue as before
-$badSet = [System.Collections.Generic.HashSet[string]]::new()
-$bad | ForEach-Object { $null = $badSet.Add($_) }
-
-$wanted = $all | Where-Object { -not $badSet.Contains($_) }
-$wanted | Sort-Object -Unique > "E:\B.1.177_desired_ids.txt"
-
-
-# Set file paths
-$fastaFile = "E:\masked_output.fasta"
-$nameListFile = "E:\B.1.177_desired_ids.txt"
-$outputFile = "E:\key_site_filtered_B.1.177.fasta"
-
-# Load desired sequence names into a HashSet
-$targetSet = [System.Collections.Generic.HashSet[string]]::new()
-Get-Content $nameListFile | ForEach-Object {
-    $name = $_.Trim()
-    if ($name -ne "") { $null = $targetSet.Add($name) }
-}
-
-# Open FASTA reader and writer
-$reader = [System.IO.StreamReader]::new($fastaFile)
-$writer = [System.IO.StreamWriter]::new($outputFile, $false, [System.Text.Encoding]::UTF8)
-$writer.NewLine = "`n"  # Use Unix line endings for compact output
-
-# Extract matching sequences
-$writeBlock = $false
-
-while (-not $reader.EndOfStream) {
-    $line = $reader.ReadLine()
-
-    if ($line.StartsWith(">")) {
-        $header = $line.Substring(1).Trim()
-        $writeBlock = $targetSet.Contains($header)
-        if ($writeBlock) { $writer.WriteLine($line) }
-    } elseif ($writeBlock) {
-        $writer.WriteLine($line)
-    }
-}
-
-# Close the streams
-$reader.Close()
-$writer.Close()
-
-Write-Output "✅ FASTA extraction complete: $outputFile"
 
