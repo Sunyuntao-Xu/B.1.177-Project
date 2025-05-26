@@ -34,4 +34,8 @@ Get-Content "E:\B.1.177_exclude_ids.txt" |
 
 seqkit grep -f "E:\B.1.177_exclude_ids_nospace.txt" -v "E:\masked_output.fasta" -o "E:\key_site_seqkit_filtered_B.1.177.fasta"
 
+# REmove duplicate IDs
+seqkit grep -f E:/iqtree_duplicate_ids.txt -v E:/key_site_seqkit_filtered_B.1.177.fasta -o E:/key_site_seqkit_filtered_B.1.177.dedup.fasta
+
+
 
