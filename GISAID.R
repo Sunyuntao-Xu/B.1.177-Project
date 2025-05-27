@@ -329,3 +329,45 @@ writeLines(paste(mask_final_combined$POS_final, collapse = ","), "E:/positions_c
 
 # Optional: Save it to a new CSV file
 write.csv(mask_only, "C:/Users/xusun/Desktop/Phylogenetic Project/Codes/cleaning_site_mask_only.csv", row.names = FALSE)
+
+
+
+####### Create a compared list of wanted B.1.177 #######
+exclude_ids <- readLines("E:/B.1.177_exclude_ids.txt", encoding = "UTF-8")
+exclude_ids <- trimws(exclude_ids)
+exclude_ids <- exclude_ids[exclude_ids != ""]
+
+
+# Replace all spaces with underscores to match the FASTA headers
+GISAID_selected_sequences_nospace <- gsub(" ", "_", GISAID_selected_sequences)
+
+desired_ids <- setdiff(GISAID_selected_sequences_nospace, exclude_ids)
+
+
+writeLines(desired_ids, "E:/B.1.177_desired_ids.txt")
+
+####### Identify identical sequences #######
+# Load duplicated cluster info from seqkit
+identical_clusters <- read_delim("E:/identical.detail.txt", delim = "\t", col_names = FALSE)
+
+
+# Clean and explode cluster members
+identical_clusters_df <- identical_clusters %>%
+  rename(ClusterSize = X1, IDs = X2) %>%
+  separate_rows(IDs, sep = ",\\s*") %>%
+  rename(ID = IDs)
+
+# Join identical clusters to metadata
+cluster_meta <- identical_clusters_df %>%
+  left_join(B.1.177_GISAID_Europe, by = c("ID" = "Virus name"))
+
+# Group by sequence identity + country + date
+redundant_ids <- cluster_meta %>%
+  group_by(ClusterSize, Country, `Collection date`) %>%  # column name might be "Collection.date"
+  filter(n() > 1) %>%
+  slice(-1) %>%  # keep one per group, discard the rest
+  ungroup()
+
+# Write list of IDs to exclude
+write_lines(redundant_ids$ID, "E:/redundant_same_country_date_ids.txt")
+
