@@ -37,8 +37,9 @@ seqkit grep -f "E:\B.1.177_exclude_ids_nospace.txt" -v "E:\masked_output.fasta" 
 # REmove duplicate IDs
 seqkit grep -f E:/iqtree_duplicate_ids.txt -v E:/key_site_seqkit_filtered_B.1.177.fasta -o E:/key_site_seqkit_filtered_B.1.177.dedup.fasta
 
-# Conduct tree construction using IQTREE
-& "C:\iqtree-2.4.0-Windows\bin\iqtree2.exe" -s "E:\key_site_seqkit_filtered_B.1.177.dedup.fasta" -m MFP -nt AUTO
+# Identify identical sequences
+seqkit rmdup -s -i -o NUL -d duplicated.fa.gz -D E:/identical.detail.txt E:/key_site_seqkit_filtered_B.1.177.dedup.fasta
+
 
 
 
