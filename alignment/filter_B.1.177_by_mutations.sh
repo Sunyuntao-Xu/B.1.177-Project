@@ -40,6 +40,12 @@ seqkit grep -f E:/iqtree_duplicate_ids.txt -v E:/key_site_seqkit_filtered_B.1.17
 # Identify identical sequences
 seqkit rmdup -s -i -o NUL -d duplicated.fa.gz -D E:/identical.detail.txt E:/key_site_seqkit_filtered_B.1.177.dedup.fasta
 
+# Remove identical sequences from FASTA file from R generated list
+seqkit grep -f E:/redundant_same_country_date_ids.txt -v \
+  E:/key_site_seqkit_filtered_B.1.177.dedup.fasta \
+  -o E:/key_site_seqkit_filtered_B.1.177.countrydate_filtered.fasta
+
+
 
 
 
