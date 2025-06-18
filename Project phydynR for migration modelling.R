@@ -30,7 +30,7 @@ pruned_tree <- drop.tip(B.1.177_tr_test, setdiff(tip_labels, sampled_ids))
 tip_labels <- pruned_tree$tip.label  # Update tip_labels to match pruned_tree
 
 # Step 2: Create sample state dataframe, match and filter to tips
-states <- ifelse(tree_metadata_test$is_uk == "Y", "I_UK", "src")
+states <- ifelse(tree_metadata_test$is_uk == "Y", "I_UK", "I_src")  
 
 sampleStates_df <- data.frame(
   tip_label = tree_metadata_test$tip_label,
@@ -42,9 +42,10 @@ sampleStates_df <- data.frame(
 
 # Step 3: Create matrix with proper columns named as demes
 I <- as.numeric(sampleStates_df$state == "I_UK")
-src <- as.numeric(sampleStates_df$state == "src")
-sampleStates_matrix <- cbind(I_UK = I, src = src)
+I_src <- as.numeric(sampleStates_df$state == "I_src")  
+sampleStates_matrix <- cbind(I_UK = I, I_src = I_src)  
 rownames(sampleStates_matrix) <- sampleStates_df$tip_label
+
 
 # Final check: tip label order must match
 stopifnot(all(rownames(sampleStates_matrix) == tip_labels))
@@ -86,6 +87,9 @@ plot(dated_tree, no.margin = TRUE, cex = 0.5)
 betaTimes <- c(2020.4, 2020.6, 2020.75, 2020.95, 2021.15, 2021.2)
 betaNames <- paste0("beta", betaTimes)
 
+mTimes <- c(2020.0, 2020.44, 2020.98)  # e.g. Jan 1, June 8, Dec 24 in decimal
+mNames <- c("m1", "m2", "m3")
+
 # Define parameters
 parms <- list(
   gamma = 365 / 7,           # Recovery rate, e.g., 1/7 per day, and in year
@@ -96,13 +100,20 @@ parms <- list(
   beta2020.95 = 300,     # Beta in December 2020
   beta2021.15 = 20,     # Beta in February 2021
   beta2021.2 = 10,          # Beta after Febuary 2021
-  m = 1             # migration rate 
+  m1 = 0.1,             # migration rate
+  m2 = 0.03,
+  m3 = 0.01
 )
 
 # Define the time-varying beta function (force of infection)
 parms$beta.t <- function(t, p){
   approx(betaTimes, unlist(p[betaNames]), xout = t, rule=2)$y
 }
+
+parms$m.t <- function(t, p) {
+  approx(mTimes, unlist(p[mNames]), xout = t, rule = 2)$y
+}
+
 
 # Set initial state: Only IR compartments, no S.
 x0 <- c(
@@ -124,8 +135,8 @@ births["I_src", "I_src"] <- "parms$beta.t(t, parms)*I_src"
 
 # We omit migration terms in the ODEs since balanced migration cancels out.
 migrations <- matrix("0", nrow = 2, ncol = 2, dimnames = list(demes, demes))
-migrations["I_UK", "I_src"] <- "parms$m * I_UK"   # Migration from Europe to UK
-migrations["I_src", "I_UK"] <- "parms$m * I_UK"   # Migration from UK to Europe
+migrations["I_UK", "I_src"] <- "parms$m.t(t, parms) * I_UK"   # Migration from Europe to UK
+migrations["I_src", "I_UK"] <- "parms$m.t(t, parms) * I_src"   # Migration from UK to Europe
 
 
 # Deaths represent losses from the infectious compartments due to recovery and natural death.
@@ -165,7 +176,9 @@ show.demographic.process(
 
 obj_fun <- function(lnbeta2020.4, lnbeta2020.6, lnbeta2020.75, 
                     lnbeta2020.95, lnbeta2021.15, lnbeta2021.2,
-                    lnm, lnI0_UK, lnI0_src) {
+                    lnm1, lnm2, lnm3,
+                    lnI0_UK, lnI0_src) {
+  
   # Add lnI0_UK and lnI0_src here
   theta <- list(
     beta2020.4    = exp(lnbeta2020.4),
@@ -175,7 +188,9 @@ obj_fun <- function(lnbeta2020.4, lnbeta2020.6, lnbeta2020.75,
     beta2021.15   = exp(lnbeta2021.15),
     beta2021.2    = exp(lnbeta2021.2),
     gamma         = 365 / 7,
-    m             = exp(lnm)
+    m1            = exp(lnm1),
+    m2            = exp(lnm2),
+    m3            = exp(lnm3)
     )
   
   # Now set x0 dynamically, with estimated I_UK
@@ -188,6 +203,7 @@ obj_fun <- function(lnbeta2020.4, lnbeta2020.6, lnbeta2020.75,
   
   
   theta$beta.t <- parms$beta.t
+  theta$m.t <- parms$m.t
   
   ll <- tryCatch(
     colik(
@@ -223,12 +239,14 @@ fit <- mle2(
     lnbeta2020.95 = log(300),
     lnbeta2021.15 = log(20),
     lnbeta2021.2  = log(10),
-    lnm           = log(1),         
+    lnm1          = log(0.1),
+    lnm2          = log(0.03),
+    lnm3          = log(0.01),
     lnI0_UK       = log(10),        
     lnI0_src      = log(100)
   ),
   method = "Nelder-Mead",
-  control = list(maxit = 3000)
+  control = list(maxit = 2000)
 )
 
 
@@ -260,7 +278,6 @@ print(exp(coefs))
 
 
 
-
 ######## Both I_UK and I_src estimated without N0_src and N0_UK #######
 AIC(fit)
 # [1] 53040.1
@@ -284,7 +301,8 @@ print(exp(coefs))
 # 8.954100e-01  4.188401e-01  1.328972e+00 
 
 
-####### mu removed, I_UK an I_src estimated, adjusted to per year #######
+
+####### mu removed, I_UK an I_src estimated, adjusted to per year
 AIC(fit)
 # [1] 196301.9
 
@@ -307,3 +325,4 @@ print(exp(coefs))
 
 #      lnI0_UK      lnI0_src 
 # 1.593528e+01  8.975211e+00
+
