@@ -39,6 +39,7 @@ Scripts for **sequence alignment**, **reference preparation**, **mutation inspec
 - Main phylodynamic modeling script
 - Implements **SIR model with migration** across geographic demes
 - Incorporates **time-varying transmission rate** `β(t)`
+- Incorporates **time-varying migration rate** `m(t)`
 - Calibrated using alignment and smoothed case data
 
 ### `GISAID.R`
