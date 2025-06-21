@@ -52,7 +52,7 @@ Scripts for **sequence alignment**, **reference preparation**, **mutation inspec
 - Estimates B.1.177 growth rate and inflection points
 - Provides time windows for time-stratified modeling in `phydynR`
 
-- ### `OXCGRT_data.R`
+### `OXCGRT_data.R`
 - Loads **OxCGRT policy tracker data** for 2020 and 2021
 - Extracts **C8EV (International Travel Controls)** data across UK regions
 - Normalizes regional naming and merges datasets
