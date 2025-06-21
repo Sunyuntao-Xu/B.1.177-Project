@@ -12,15 +12,19 @@ This repository contains a complete alignment preparation and modeling pipeline 
 ## 📁 Folder Structure
 
 ### `alignment/`
-Scripts related to **sequence alignment**, **reference preparation**, and **masking**.
+Scripts for **sequence alignment**, **reference preparation**, **mutation inspection**, and **site masking**.
 
-| Script | Description |
-|--------|-------------|
-| `B.1.177_alignment_cleanup_pipeline.sh` | Full alignment processing pipeline (reference merge, sequence extraction, trimming) |
-| `remove_gap_only_columns.py` | Removes alignment columns that are gaps in all sequences |
-| `B.1.177_key_mutation_retrive.sh` | Extracts base states at key mutation sites for inspection |
-| `B.1.177_sites_check_and_masking.sh` | Summarizes key site frequencies and masks selected sites with `seqkit mutate` |
-| `split_alignment.sh` | Optional script to split large FASTA files for batch handling |
+| Script                                 | Description |
+|----------------------------------------|-------------|
+| `B.1.177_alignment_cleanup_pipeline.sh` | Main pipeline script for processing: merges references, extracts B.1.177 sequences, trims alignments, and performs initial cleanup. |
+| `remove_gap_only_columns.py`           | Python script to remove columns in the alignment that consist only of gaps across all sequences. |
+| `B.1.177_key_mutation_retrive.sh`      | Extracts nucleotide states at selected key mutation positions for inspection and tracking. |
+| `B.1.177_sites_check_and_masking.sh`   | Summarizes base frequencies at predefined mutation sites and masks specific sites using `seqkit mutate`. |
+| `filter_B.1.177_by_mutations.sh`       | Filters the alignment to include only sequences carrying defined mutations. |
+| `split_alignment.sh`                   | Optional utility to split large FASTA files into smaller chunks for easier handling or parallel processing. |
+| `subsampling_and_modelfinding.sh`      | Performs alignment subsampling and selects the best substitution model using IQ-TREE. |
+| `B.1.177_tree_building.sh`             | Constructs maximum likelihood trees using IQ-TREE, with support for bootstrapping and model selection. |
+
 
 ---
 
