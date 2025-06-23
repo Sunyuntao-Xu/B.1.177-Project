@@ -136,7 +136,7 @@ births["I_src", "I_src"] <- "parms$beta.t(t, parms)*I_src"
 # We omit migration terms in the ODEs since balanced migration cancels out.
 migrations <- matrix("0", nrow = 2, ncol = 2, dimnames = list(demes, demes))
 migrations["I_UK", "I_src"] <- "parms$m.t(t, parms) * I_UK"   # Migration from Europe to UK
-migrations["I_src", "I_UK"] <- "parms$m.t(t, parms) * I_src"   # Migration from UK to Europe
+migrations["I_src", "I_UK"] <- "parms$m.t(t, parms) * I_UK"   # Migration from UK to Europe
 
 
 # Deaths represent losses from the infectious compartments due to recovery and natural death.
