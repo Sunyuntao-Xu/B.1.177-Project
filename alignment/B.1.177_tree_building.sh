@@ -9,13 +9,12 @@
 -pre B117_mainTree
 
 
-
 /home/yuntao/Desktop/iqtree-3.0.1-Linux/bin/iqtree3_intel \
   -s "/media/yuntao/Toby Drive/key_site_seqkit_filtered_B.1.177.dedup.fasta" \
   -m GTR+F+I+R3 \
-  -bb 100 \
   --bnni \
   -nt AUTO \
   -mem 0.95 \
   -safe \
-  -pre "/media/yuntao/Toby Drive/B117_mainTree"
+  -pre /media/yuntao/Toby\ Drive/IQTREE_B.1.177/B117_mainTree
+
