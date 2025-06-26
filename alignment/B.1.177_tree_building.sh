@@ -15,6 +15,7 @@
   --bnni \
   -nt AUTO \
   -mem 0.95 \
-  -safe \
+  -fast \
+  -keep-ident \
   -pre /media/yuntao/Toby\ Drive/IQTREE_B.1.177/B117_mainTree
 
