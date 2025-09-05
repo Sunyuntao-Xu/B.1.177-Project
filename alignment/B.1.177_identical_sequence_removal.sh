@@ -5,9 +5,9 @@ $in     = "E:\key_site_seqkit_filtered_B.1.177.dedup.fasta"
 $outDir = "E:\B117_dedup_by_sequence"
 
 # Output files
-$outSeq = "$outDir\B117.unique.fasta"       # FASTA after removing identical sequences
-$kept   = "$outDir\B117.kept_ids.txt"       # IDs that were kept
-$removed= "$outDir\B117.removed_ids.txt"    # IDs that were removed
+$outSeq = "$outDir\B.1.117_unique_bases_sequence.fasta"       # FASTA after removing identical sequences
+$kept   = "$outDir\B.1.117.kept_unique_ids.txt"       # IDs that were kept
+$removed= "$outDir\B.1.117.removed_identical_ids.txt"    # IDs that were removed
 
 # 1) Remove identical sequences, write unique FASTA
 seqkit rmdup -s -i -o $outSeq $in
