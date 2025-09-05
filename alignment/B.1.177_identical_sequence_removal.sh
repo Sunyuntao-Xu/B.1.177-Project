@@ -2,7 +2,7 @@
 New-Item -ItemType Directory E:\B117_dedup_by_sequence -Force | Out-Null
 
 $in     = "E:\key_site_seqkit_filtered_B.1.177.dedup.fasta"
-$outDir = "E:\B117_dedup_by_sequence"
+$outDir = "E:\B.1.117_dedup_by_sequence"
 
 # Output files
 $outSeq = "$outDir\B.1.117_unique_bases_sequence.fasta"       # FASTA after removing identical sequences
