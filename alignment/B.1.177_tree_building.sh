@@ -20,11 +20,12 @@
   -pre /media/yuntao/Toby\ Drive/IQTREE_B.1.177/B117_mainTree
 
 /home/yuntao/Desktop/iqtree-3.0.1-Linux/bin/iqtree3_intel \
-  -s "/home/yuntao/Desktop/B.1.117_unique_bases_sequence.fasta" \
+  -s ~/Desktop/B.1.117_unique_bases_sequence.fasta \
   -m GTR+F+I+R3 \
   --bnni \
   -nt AUTO \
   -mem 0.95 \
   -fast \
   -keep-ident \
-  -pre /home/yuntao/Desktop/IQTREE_B.1.117/B117_mainTree
+  -pre ~/Desktop/IQTREE_B.1.177/B117_mainTree
+
