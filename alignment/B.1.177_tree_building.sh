@@ -32,7 +32,7 @@
 
 
 
-
+# Tree building terminated
 ls -lh ~/Desktop/IQTREE_B.1.177/B117_mainTree.ckp.gz
 ls -lh ~/Desktop/IQTREE_B.1.177/ | grep B117_mainTree
 /home/yuntao/Desktop/iqtree-3.0.1-Linux/bin/iqtree3_intel \
