@@ -29,3 +29,19 @@
   -keep-ident \
   -pre ~/Desktop/IQTREE_B.1.177/B117_mainTree
 
+
+
+
+
+ls -lh ~/Desktop/IQTREE_B.1.177/B117_mainTree.ckp.gz
+ls -lh ~/Desktop/IQTREE_B.1.177/ | grep B117_mainTree
+/home/yuntao/Desktop/iqtree-3.0.1-Linux/bin/iqtree3_intel \
+  -s ~/Desktop/B.1.117_unique_bases_sequence.fasta \
+  -m GTR+F+I+R3 \
+  --bnni \
+  -nt AUTO \
+  -mem 0.95 \
+  -fast \
+  -keep-ident \
+  -pre ~/Desktop/IQTREE_B.1.177/B117_mainTree
+
